@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\BudgetController; // Added this
 use Illuminate\Support\Facades\Route;
 
 // Guest Routes
@@ -14,6 +15,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [TransactionController::class, 'index']);
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
     Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+
+    // Budgets (Added this to fix the 404 error)
+    Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
 
     // Settings Functionality (Profile & Password Updates)
     Route::put('/profile/update', [TransactionController::class, 'updateProfile'])->name('profile.update');

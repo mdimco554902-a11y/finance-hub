@@ -64,13 +64,12 @@
             <h2>Budgets</h2>
             <p>Track your spending limits and progress.</p>
         </div>
-        <!-- No button here -->
+        <button class="btn-add" onclick="toggleBudgetModal(true)">+ Add Budget</button>
     @elseif(request('view') == 'settings')
         <div>
             <h2>Settings</h2>
             <p>Manage your account preferences and security.</p>
         </div>
-        <!-- No button here -->
     @else
         <div>
             <h2>Dashboard</h2>
@@ -80,7 +79,6 @@
     @endif
 </div>
 
-<!-- FORM MODAL -->
 <div id="addModal" class="modal-overlay">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between;">
@@ -109,8 +107,32 @@
     </div>
 </div>
 
+<div id="addBudgetModal" class="modal-overlay">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between;">
+            <h3>New Budget</h3>
+            <button onclick="toggleBudgetModal(false)" style="border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+        </div>
+        <form action="/budgets" method="POST">
+            @csrf
+            <div class="form-group">
+                <label>Category Name</label>
+                <input type="text" name="category" class="form-input" placeholder="e.g. McDonald's, Groceries" required>
+            </div>
+            <div class="form-group">
+                <label>Limit Amount (₱)</label>
+                <input type="number" name="limit_amount" class="form-input" step="0.01" placeholder="1000.00" required>
+            </div>
+            <div class="form-group">
+                <label>Theme Color</label>
+                <input type="color" name="color" class="form-input" style="height: 45px; padding: 5px;" value="#2563EB">
+            </div>
+            <button type="submit" class="btn-save">Create Budget</button>
+        </form>
+    </div>
+</div>
+
 @if(request('view') == 'transactions')
-    <!-- VIEW: ALL TRANSACTIONS -->
     <div class="card-section">
         <form action="/" method="GET" class="search-container">
             <input type="hidden" name="view" value="transactions">
@@ -147,7 +169,6 @@
     </div>
 
 @elseif(request('view') == 'budgets') 
-    <!-- VIEW: BUDGETS (FIGMA STYLE) --> 
     <div class="budget-grid"> 
         @forelse($budgets as $b) 
         <div class="budget-card"> 
@@ -167,7 +188,7 @@
         </div> 
         @empty 
         <div class="stat-card" style="grid-column: span 2; text-align:center; padding:50px;"> 
-            <p style="color:#94A3B8;">No budgets found. Use Tinker or create a Budget Seeder to add data.</p> 
+            <p style="color:#94A3B8;">No budgets found. Add one to start tracking!</p> 
         </div> 
         @endforelse 
     </div> 
@@ -189,42 +210,33 @@
     </style>
 
     <div class="settings-container">
-        <!-- Profile Settings Card -->
         <div class="settings-card">
             <span class="settings-title">Profile Settings</span>
-            
             <div class="settings-row">
                 <div>
                     <p class="label-text">Full Name</p>
                     <p class="value-text">{{ auth()->user()->name ?? 'Admin User' }}</p>
                 </div>
-                <!-- Button triggers the Profile Modal -->
                 <button class="btn-action" onclick="toggleSettingsModal('profileModal', true)">Edit Name</button>
             </div>
-
             <div class="settings-row">
                 <div>
                     <p class="label-text">Email Address</p>
                     <p class="value-text">{{ auth()->user()->email ?? 'admin@test.com' }}</p>
                 </div>
-                <!-- Button triggers the Profile Modal -->
                 <button class="btn-action" onclick="toggleSettingsModal('profileModal', true)">Change Email</button>
             </div>
         </div>
 
-        <!-- Security Card -->
         <div class="settings-card" style="border-left: 4px solid #EF4444;">
             <span class="settings-title" style="color: #EF4444;">Security & Privacy</span>
-            
             <div class="settings-row">
                 <div>
                     <p class="label-text">Account Password</p>
                     <p class="value-text">Last updated recently</p>
                 </div>
-                <!-- Button triggers the Password Modal -->
                 <button class="btn-action btn-danger" onclick="toggleSettingsModal('passwordModal', true)">Reset Password</button>
             </div>
-
             <div class="settings-row">
                 <div>
                     <p class="label-text">Two-Factor Authentication</p>
@@ -235,7 +247,6 @@
         </div>
     </div>
 
-    <!-- MODAL: EDIT PROFILE (NEW) -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content">
             <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
@@ -258,7 +269,6 @@
         </div>
     </div>
 
-    <!-- MODAL: RESET PASSWORD (NEW) -->
     <div id="passwordModal" class="modal-overlay">
         <div class="modal-content">
             <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
@@ -266,42 +276,35 @@
                 <button onclick="toggleSettingsModal('passwordModal', false)" style="border:none; background:none; font-size:24px; cursor:pointer; color:#94A3B8;">&times;</button>
             </div>
             <form action="{{ route('password.update') }}" method="POST">
-    @csrf @method('PUT')
-    <div style="margin-bottom:15px;">
-        <label class="label-text">New Password</label>
-        <input type="password" name="password" class="form-input" required>
-    </div>
-    <div style="margin-bottom:15px;">
-        <label class="label-text">Confirm New Password</label>
-        <!-- The name MUST be password_confirmation -->
-        <input type="password" name="password_confirmation" class="form-input" required>
-    </div>
-    <button type="submit" class="btn-save" style="background:#EF4444;">Update Password</button>
-</form>
-
+                @csrf @method('PUT')
+                <div style="margin-bottom:15px;">
+                    <label class="label-text">New Password</label>
+                    <input type="password" name="password" class="form-input" required>
+                </div>
+                <div style="margin-bottom:15px;">
+                    <label class="label-text">Confirm New Password</label>
+                    <input type="password" name="password_confirmation" class="form-input" required>
+                </div>
+                <button type="submit" class="btn-save" style="background:#EF4444;">Update Password</button>
+            </form>
         </div>
     </div>
 
 
 @else
-    <!-- NEW REORGANIZED DASHBOARD -->
     <div style="display: flex; flex-direction: column; gap: 32px;">
-        
-        <!-- Top Row: 3 Summary Cards side-by-side -->
         <div style="display: grid; grid-template-cols: repeat(3, 1fr); gap: 24px;">
-            <!-- Income Card -->
             <div class="stat-card" style="border-left: 4px solid #10B981;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <div class="label">Total Income</div>
                         <div class="value">₱{{ number_format($income, 2) }}</div>
                     </div>
-                    <div style="font-size: 24px; background: #ECFDF5; padding: 10px; rounded-radius: 12px;">📈</div>
+                    <div style="font-size: 24px; background: #ECFDF5; padding: 10px; border-radius: 12px;">📈</div>
                 </div>
                 <div class="trend up" style="margin-top: 12px;">+12.5% this month</div>
             </div>
 
-            <!-- Expenses Card -->
             <div class="stat-card" style="border-left: 4px solid #F43F5E;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
@@ -313,7 +316,6 @@
                 <div class="trend down" style="margin-top: 12px;">-8.2% this month</div>
             </div>
 
-            <!-- Savings Card -->
             <div class="stat-card" style="border-left: 4px solid #2563EB; background: #F8FAFC;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
@@ -326,13 +328,11 @@
             </div>
         </div>
 
-        <!-- Middle Row: Recent Transactions List -->
         <div class="card-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                 <h3 style="color: #1E293B; font-weight: 800; font-size: 20px;">Recent Activity</h3>
                 <a href="/?view=transactions" style="color: #2563EB; font-weight: 700; text-decoration: none; font-size: 14px;">View Statement →</a>
             </div>
-
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 @foreach($transactions->take(5) as $t)
                 <div class="transaction-item" style="background: #F8FAFC; padding: 16px; border-radius: 16px; border: 1px solid transparent; transition: 0.2s;" onmouseover="this.style.borderColor='#E2E8F0'" onmouseout="this.style.borderColor='transparent'">
@@ -365,6 +365,13 @@
     }
 
     /**
+     * Controls the "Add Budget" Modal
+     */
+    function toggleBudgetModal(show) {
+        document.getElementById('addBudgetModal').style.display = show ? 'flex' : 'none';
+    }
+
+    /**
      * Controls the Settings Modals (Profile and Password)
      */
     function toggleSettingsModal(id, show) {
@@ -378,12 +385,11 @@
      * Global click listener to close modals when clicking on the dark background
      */
     window.onclick = function(event) {
-        // List of all possible modal IDs in your system
-        const modals = ['addModal', 'profileModal', 'passwordModal'];
+        const modals = ['addModal', 'profileModal', 'passwordModal', 'addBudgetModal'];
         
         modals.forEach(id => {
             const modal = document.getElementById(id);
-            if (event.target == modal) {
+            if (modal && event.target == modal) {
                 modal.style.display = 'none';
             }
         });

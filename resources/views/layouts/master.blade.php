@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinanceHub</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { display: flex; background-color: #F8FAFC; min-height: 100vh; }
@@ -11,12 +12,26 @@
         /* Sidebar Styles */
         .sidebar { width: 280px; background: white; border-right: 1px solid #E2E8F0; position: fixed; height: 100vh; padding: 32px; display: flex; flex-direction: column; z-index: 100; }
         .logo-area { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
-        .logo-icon { background: #2563EB; color: white; padding: 8px 12px; border-radius: 12px; font-weight: bold; font-size: 20px; }
+        
+        /* UPDATED LOGO ICON: Extra Bold to match Login Page */
+        .logo-icon { 
+            background: #2563EB; 
+            color: white; 
+            padding: 8px 12px; 
+            border-radius: 12px; 
+            font-weight: 900; /* Extra bold */
+            font-size: 20px; 
+            letter-spacing: -1px; /* Tighter look for professional logo feel */
+            text-transform: uppercase;
+        }
         .logo-text { font-size: 20px; font-weight: 700; color: #1E293B; }
         
         .nav-menu { flex-grow: 1; }
         .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; color: #64748B; font-weight: 600; border-radius: 12px; margin-bottom: 8px; transition: 0.3s; }
         
+        /* Sidebar Icon Sizing */
+        .nav-item i { width: 20px; height: 20px; stroke-width: 2.5px; }
+
         /* Active State Logic */
         .nav-item.active { background: #2563EB; color: white !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
         .nav-item:hover:not(.active) { background: #F1F5F9; color: #1E293B; }
@@ -45,19 +60,19 @@
 
         <nav class="nav-menu">
             <a href="/?view=dashboard" class="nav-item {{ request('view', 'dashboard') == 'dashboard' ? 'active' : '' }}">
-                <span>📊</span> Dashboard
+                <i data-lucide="layout-dashboard"></i> Dashboard
             </a>
 
             <a href="/?view=transactions" class="nav-item {{ request('view') == 'transactions' ? 'active' : '' }}">
-                <span>💳</span> Transactions
+                <i data-lucide="arrow-right-left"></i> Transactions
             </a>
 
             <a href="/?view=budgets" class="nav-item {{ request('view') == 'budgets' ? 'active' : '' }}">
-                <span>🎯</span> Budgets
+                <i data-lucide="target"></i> Budgets
             </a>
 
             <a href="/?view=settings" class="nav-item {{ request('view') == 'settings' ? 'active' : '' }}">
-                <span>⚙️</span> Settings
+                <i data-lucide="settings"></i> Settings
             </a>
         </nav>
 
@@ -81,5 +96,9 @@
     <main class="main-content">
         @yield('content')
     </main>
+
+    <script>
+      lucide.createIcons();
+    </script>
 </body>
 </html>

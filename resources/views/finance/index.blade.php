@@ -338,7 +338,7 @@
                 <div class="transaction-item" style="background: #F8FAFC; padding: 16px; border-radius: 16px; border: 1px solid transparent; transition: 0.2s;" onmouseover="this.style.borderColor='#E2E8F0'" onmouseout="this.style.borderColor='transparent'">
                     <div style="display: flex; align-items: center; gap: 16px;">
                         <div class="icon-box" style="background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                            {{ $t->type == 'income' ? '💰' : '🛒' }}
+                            {{ $t->type == 'income' ? '💰' : '🧾' }}
                         </div>
                         <div>
                             <p style="font-weight: 700; color: #1E293B; margin: 0;">{{ $t->title }}</p>

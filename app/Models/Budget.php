@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Budget extends Model
 {
@@ -16,7 +17,16 @@ class Budget extends Model
         'limit_amount',
         'color',
         'used',
+        'user_id', // Added user_id to allow mass assignment
     ];
+
+    /**
+     * Get the user that owns the budget.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Optional: Helper to calculate remaining balance

@@ -9,8 +9,9 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    // This "fillable" property tells Laravel these fields are safe to save
+    // Added 'user_id' to the fillable array to allow saving the transaction owner
     protected $fillable = [
+        'user_id',
         'title',
         'amount',
         'type',

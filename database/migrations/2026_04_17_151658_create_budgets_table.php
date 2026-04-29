@@ -9,12 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void {
+   public function up(): void
+{
     Schema::create('budgets', function (Blueprint $table) {
         $table->id();
+        $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Add this
         $table->string('category');
-        $table->decimal('limit_amount', 10, 2);
-        $table->string('color')->default('#2563EB'); // For the progress bar color
+        $table->decimal('limit_amount', 15, 2);
+        $table->string('color')->default('#3b82f6');
         $table->timestamps();
     });
 }

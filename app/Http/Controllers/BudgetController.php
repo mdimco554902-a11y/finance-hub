@@ -2,29 +2,69 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Budget;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BudgetController extends Controller
 {
+    /**
+     * Store a new budget.
+     */
     public function store(Request $request)
     {
-        // Validates the data from your modal
+        $data = $request->validate([
+            'category' => 'required|string|max:255',
+            'limit_amount' => 'required|numeric|min:1',
+            'color' => 'nullable|string',
+        ]);
+
+        $data['user_id'] = Auth::id();
+
+        Budget::create($data);
+
+        return redirect()->back()->with('success', 'Budget created successfully!');
+    }
+
+    /**
+     * Update an existing budget.
+     * Note: Variable $budget matches {budget} in web.php
+     */
+    public function update(Request $request, Budget $budget)
+    {
+        // Security Check: Ensure the user owns this budget
+        if ($budget->user_id !== Auth::id()) {
+            abort(403);
+        }
+
         $request->validate([
             'category' => 'required|string|max:255',
-            'limit_amount' => 'required|numeric',
+            'limit_amount' => 'required|numeric|min:1',
             'color' => 'required|string',
         ]);
 
-        // Saves the "McDonald's" budget to the database
-        Budget::create([
+        $budget->update([
             'category' => $request->category,
             'limit_amount' => $request->limit_amount,
             'color' => $request->color,
-            'used' => 0, // Starts at zero used
         ]);
 
-        // Redirects back to the budget view instead of showing a 404
-        return redirect('/?view=budgets');
+        return redirect()->back()->with('success', 'Budget updated successfully!');
+    }
+
+    /**
+     * Remove a budget.
+     * Note: Variable $budget matches {budget} in web.php
+     */
+    public function destroy(Budget $budget)
+    {
+        // Security Check: Ensure the user owns this budget
+        if ($budget->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $budget->delete();
+
+        return redirect()->back()->with('success', 'Budget deleted successfully!');
     }
 }

@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
 {
-    Schema::create('transactions', function (Blueprint $table) {
+    Schema::create('savings', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade'); // <--- ADD THIS
+        // This line is the most important one!
+        $table->foreignId('user_id')->constrained()->onDelete('cascade'); 
         $table->string('title');
-        $table->decimal('amount', 10, 2);
-        $table->enum('type', ['income', 'expense']);
+        $table->decimal('target_amount', 15, 2);
+        $table->decimal('current_amount', 15, 2)->default(0);
+        $table->string('color')->default('#10b981');
         $table->timestamps();
     });
 }
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transactions');
+        Schema::dropIfExists('savings');
     }
 };

@@ -59,22 +59,26 @@
         </div>
 
         <nav class="nav-menu">
-            <a href="/?view=dashboard" class="nav-item {{ request('view', 'dashboard') == 'dashboard' ? 'active' : '' }}">
-                <i data-lucide="layout-dashboard"></i> Dashboard
-            </a>
+    <a href="/?view=dashboard" class="nav-item {{ request('view', 'dashboard') == 'dashboard' ? 'active' : '' }}">
+        <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
 
-            <a href="/?view=transactions" class="nav-item {{ request('view') == 'transactions' ? 'active' : '' }}">
-                <i data-lucide="arrow-right-left"></i> Transactions
-            </a>
+    <a href="/?view=transactions" class="nav-item {{ request('view') == 'transactions' ? 'active' : '' }}">
+        <i data-lucide="arrow-right-left"></i> Transactions
+    </a>
 
-            <a href="/?view=budgets" class="nav-item {{ request('view') == 'budgets' ? 'active' : '' }}">
-                <i data-lucide="target"></i> Budgets
-            </a>
+    <a href="/?view=budgets" class="nav-item {{ request('view') == 'budgets' ? 'active' : '' }}">
+        <i data-lucide="target"></i> Budgets
+    </a>
 
-            <a href="/?view=settings" class="nav-item {{ request('view') == 'settings' ? 'active' : '' }}">
-                <i data-lucide="settings"></i> Settings
-            </a>
-        </nav>
+    <a href="/?view=savings" class="nav-item {{ request('view') == 'savings' ? 'active' : '' }}">
+        <i data-lucide="piggy-bank"></i> Savings
+    </a>
+
+    <a href="/?view=settings" class="nav-item {{ request('view') == 'settings' ? 'active' : '' }}">
+        <i data-lucide="settings"></i> Settings
+    </a>
+</nav>
 
         <div class="user-section">
             <div class="user-info">

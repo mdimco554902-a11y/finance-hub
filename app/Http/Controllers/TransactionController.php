@@ -26,40 +26,47 @@ class TransactionController extends Controller
         // 2. Get Transactions
         $transactions = $query->latest()->get();
 
-        // 3. Calculate All-time totals - Limited to current user
+        // 3. Calculate All-time totals
         $income = Transaction::where('user_id', $userId)->where('type', 'income')->sum('amount');
         $expense = Transaction::where('user_id', $userId)->where('type', 'expense')->sum('amount');
         $balance = $income - $expense;
 
-        // 4. LIVE PERCENTAGE LOGIC - Limited to current user
-        $thisMonthIncome = Transaction::where('user_id', $userId)->where('type', 'income')->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('amount');
-        $thisMonthExpense = Transaction::where('user_id', $userId)->where('type', 'expense')->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('amount');
+        // 4. LIVE PERCENTAGE LOGIC
+        $now = now();
+        $thisMonthIncome = Transaction::where('user_id', $userId)->where('type', 'income')->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->sum('amount');
+        $thisMonthExpense = Transaction::where('user_id', $userId)->where('type', 'expense')->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->sum('amount');
 
-        $lastMonthIncome = Transaction::where('user_id', $userId)->where('type', 'income')->whereMonth('created_at', now()->subMonth()->month)->whereYear('created_at', now()->subMonth()->year)->sum('amount');
-        $lastMonthExpense = Transaction::where('user_id', $userId)->where('type', 'expense')->whereMonth('created_at', now()->subMonth()->month)->whereYear('created_at', now()->subMonth()->year)->sum('amount');
+        $lastMonth = now()->subMonth();
+        $lastMonthIncome = Transaction::where('user_id', $userId)->where('type', 'income')->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->sum('amount');
+        $lastMonthExpense = Transaction::where('user_id', $userId)->where('type', 'expense')->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->sum('amount');
 
         $incomeChange = $lastMonthIncome > 0 ? (($thisMonthIncome - $lastMonthIncome) / $lastMonthIncome) * 100 : ($thisMonthIncome > 0 ? 100 : 0);
         $expenseChange = $lastMonthExpense > 0 ? (($thisMonthExpense - $lastMonthExpense) / $lastMonthExpense) * 100 : ($thisMonthExpense > 0 ? 100 : 0);
 
-        // 5. Fetch Budgets - Limited to current user
-        $budgets = Budget::where('user_id', $userId)->get()->map(function($budget) use ($userId) {
+        // 5. Fetch Budgets & Categories for the Datalist
+        // We get unique categories to fix the "Undefined variable $categories" error
+        $allBudgets = Budget::where('user_id', $userId)->get();
+        $categories = $allBudgets->pluck('category')->unique();
+
+        $budgets = $allBudgets->map(function($budget) use ($userId) {
             $used = Transaction::where('user_id', $userId)
                 ->where('type', 'expense')
-                ->where('title', 'like', '%' . $budget->category . '%')
+                ->where('title', $budget->category) 
                 ->sum('amount');
+                
             $budget->used = $used;
             $budget->remaining = $budget->limit_amount - $used;
             $budget->percent = $budget->limit_amount > 0 ? ($used / $budget->limit_amount) * 100 : 0;
             return $budget;
         });
 
-        // 6. Fetch Savings goals - Limited to current user
+        // 6. Fetch Savings goals
         $savings = Saving::where('user_id', $userId)->get()->map(function($goal) {
             $goal->percentage = $goal->target_amount > 0 ? round(($goal->current_amount / $goal->target_amount) * 100) : 0;
             return $goal;
         });
 
-        // 7. Return the view
+        // 7. Return the view with all required variables
         return view('finance.index', compact(
             'transactions', 
             'income', 
@@ -67,6 +74,7 @@ class TransactionController extends Controller
             'balance', 
             'search', 
             'budgets',
+            'categories',
             'incomeChange',
             'expenseChange',
             'savings'
@@ -81,7 +89,6 @@ class TransactionController extends Controller
             'type' => 'required|in:income,expense',
         ]);
 
-        // FIXED: Added user_id to prevent the SQL "default value" error
         $data['user_id'] = Auth::id();
 
         Transaction::create($data);
@@ -90,7 +97,6 @@ class TransactionController extends Controller
 
     public function destroy(Transaction $transaction)
     {
-        // Security Check: Ensure user owns transaction before deleting
         if ($transaction->user_id !== Auth::id()) {
             abort(403);
         }

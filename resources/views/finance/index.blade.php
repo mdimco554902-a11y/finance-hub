@@ -116,8 +116,14 @@
         <form action="{{ route('transactions.store') }}" method="POST">
             @csrf
             <div class="form-group">
-                <label>Description</label>
-                <input type="text" name="title" class="form-input" placeholder="e.g. Starbucks Coffee" required>
+                <label>Description (Category)</label>
+                {{-- Updated to Datalist for flexible typing with suggestions --}}
+                <input type="text" name="title" list="category-suggestions" class="form-input" placeholder="e.g. Salary, Rent" required autocomplete="off">
+                <datalist id="category-suggestions">
+                    @foreach($categories as $category)
+                        <option value="{{ $category }}">
+                    @endforeach
+                </datalist>
             </div>
             <div class="form-group">
                 <label>Amount (₱)</label>
@@ -412,21 +418,21 @@
                     <button onclick="toggleSettingsModal('profileModal', false)" style="border:none; background:none; font-size:24px; cursor:pointer; color:#94A3B8;">&times;</button>
                 </div>
                 <form action="{{ route('profile.update') }}" method="POST">
-    @csrf
-    @method('PUT')
-    
-    <div style="margin-bottom:15px;">
-        <label class="label-text">Full Name</label>
-        <input type="text" name="name" class="form-input" value="{{ auth()->user()->name }}" required>
-    </div>
-    
-    <div style="margin-bottom:15px;">
-        <label class="label-text">Email Address</label>
-        <input type="email" name="email" class="form-input" value="{{ auth()->user()->email }}" required>
-    </div>
-    
-    <button type="submit" class="btn-save">Save Changes</button>
-</form>
+                    @csrf
+                    @method('PUT')
+                    
+                    <div style="margin-bottom:15px;">
+                        <label class="label-text">Full Name</label>
+                        <input type="text" name="name" class="form-input" value="{{ auth()->user()->name }}" required>
+                    </div>
+                    
+                    <div style="margin-bottom:15px;">
+                        <label class="label-text">Email Address</label>
+                        <input type="email" name="email" class="form-input" value="{{ auth()->user()->email }}" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </form>
             </div>
         </div>
     </div>
@@ -544,7 +550,6 @@
     }
 
     function openEditSavingsModal(saving) {
-    // This MUST match the route: /savings/{saving}
     document.getElementById('editSavingsForm').action = "/savings/" + saving.id;
     document.getElementById('edit_saving_title').value = saving.title;
     document.getElementById('edit_saving_target').value = saving.target_amount;
@@ -558,7 +563,6 @@
     }
 
     function openEditBudgetModal(budget) {
-    // This MUST match the route: /budgets/{budget}
     document.getElementById('editBudgetForm').action = "/budgets/" + budget.id;
     document.getElementById('edit_budget_category').value = budget.category;
     document.getElementById('edit_budget_limit').value = budget.limit_amount;
@@ -566,7 +570,6 @@
     toggleEditBudgetModal(true);
 }
 
-    // Modern Delete Confirmation
     function confirmDelete(type, id) {
         Swal.fire({
             title: 'Delete this ' + (type === 'budgets' ? 'budget' : 'goal') + '?',

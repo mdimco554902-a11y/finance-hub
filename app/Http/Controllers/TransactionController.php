@@ -26,7 +26,7 @@ class TransactionController extends Controller
         }
 
         // 2. Get Transactions (paginated) and recent activity
-        $perPage = 2;
+        $perPage = 10;
         $transactions = $query->latest()->paginate($perPage)->withQueryString();
         $recentTransactions = Cache::remember(
             'finance.recent_transactions.' . $userId,
@@ -86,7 +86,7 @@ class TransactionController extends Controller
         );
 
         // Paginate budgets and compute used/remaining/percent on the current page collection
-        $budgetsPerPage = 6;
+        $budgetsPerPage = 10;
         $budgetsQuery = Budget::where('user_id', $userId)->orderBy('id', 'asc');
         $budgets = $budgetsQuery->paginate($budgetsPerPage)->withQueryString();
         $budgets->getCollection()->transform(function($budget) use ($expenseByCategory) {
@@ -99,7 +99,7 @@ class TransactionController extends Controller
         });
 
         // 6. Fetch Savings goals (paginated)
-        $savingsPerPage = 6;
+        $savingsPerPage = 10;
         $savingsQuery = Saving::where('user_id', $userId)->orderBy('id', 'asc');
         $savings = $savingsQuery->paginate($savingsPerPage)->withQueryString();
         $savings->getCollection()->transform(function($goal) {

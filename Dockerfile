@@ -50,23 +50,20 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copy composer files first for better layer caching
-COPY composer.json composer.lock ./
+# Copy entire application code
+COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Copy package files
-COPY package.json package-lock.json ./
+# Install PHP dependencies (skip scripts initially to avoid artisan not found)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Install frontend dependencies
 RUN npm install --production
 
-# Copy application code
-COPY . .
-
 # Build Vite assets
 RUN npm run build
+
+# Run Laravel post-install commands
+RUN php artisan package:discover --ansi
 
 # Create required directories and set permissions
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache storage/logs \

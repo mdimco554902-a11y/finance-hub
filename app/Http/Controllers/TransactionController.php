@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use App\Models\Budget;
 use App\Models\Saving; 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,11 +16,11 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $userId = Auth::id();
+        $search = $request->input('search');
 
         // 1. Handle Search - Limited to current user
-        $search = $request->input('search');
         $query = Transaction::where('user_id', $userId);
-        
+
         if ($search) {
             $query->where('title', 'like', '%' . $search . '%');
         }
@@ -26,21 +28,42 @@ class TransactionController extends Controller
         // 2. Get Transactions (paginated) and recent activity
         $perPage = 2;
         $transactions = $query->latest()->paginate($perPage)->withQueryString();
-        $recentTransactions = Transaction::where('user_id', $userId)->latest()->take(5)->get();
+        $recentTransactions = Cache::remember(
+            'finance.recent_transactions.' . $userId,
+            now()->addMinutes(2),
+            function () use ($userId) {
+                return Transaction::where('user_id', $userId)->latest()->take(5)->get();
+            }
+        );
 
         // 3. Calculate All-time totals
-        $income = Transaction::where('user_id', $userId)->where('type', 'income')->sum('amount');
-        $expense = Transaction::where('user_id', $userId)->where('type', 'expense')->sum('amount');
+        $summary = Cache::remember(
+            'finance.summary.' . $userId,
+            now()->addMinutes(2),
+            function () use ($userId) {
+                $now = now();
+                $lastMonth = now()->subMonth();
+
+                return [
+                    'income' => (float) Transaction::where('user_id', $userId)->where('type', 'income')->sum('amount'),
+                    'expense' => (float) Transaction::where('user_id', $userId)->where('type', 'expense')->sum('amount'),
+                    'this_month_income' => (float) Transaction::where('user_id', $userId)->where('type', 'income')->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->sum('amount'),
+                    'this_month_expense' => (float) Transaction::where('user_id', $userId)->where('type', 'expense')->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->sum('amount'),
+                    'last_month_income' => (float) Transaction::where('user_id', $userId)->where('type', 'income')->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->sum('amount'),
+                    'last_month_expense' => (float) Transaction::where('user_id', $userId)->where('type', 'expense')->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->sum('amount'),
+                ];
+            }
+        );
+
+        $income = $summary['income'];
+        $expense = $summary['expense'];
         $balance = $income - $expense;
 
         // 4. LIVE PERCENTAGE LOGIC
-        $now = now();
-        $thisMonthIncome = Transaction::where('user_id', $userId)->where('type', 'income')->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->sum('amount');
-        $thisMonthExpense = Transaction::where('user_id', $userId)->where('type', 'expense')->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->sum('amount');
-
-        $lastMonth = now()->subMonth();
-        $lastMonthIncome = Transaction::where('user_id', $userId)->where('type', 'income')->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->sum('amount');
-        $lastMonthExpense = Transaction::where('user_id', $userId)->where('type', 'expense')->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->sum('amount');
+        $thisMonthIncome = $summary['this_month_income'];
+        $thisMonthExpense = $summary['this_month_expense'];
+        $lastMonthIncome = $summary['last_month_income'];
+        $lastMonthExpense = $summary['last_month_expense'];
 
         $incomeChange = $lastMonthIncome > 0 ? (($thisMonthIncome - $lastMonthIncome) / $lastMonthIncome) * 100 : ($thisMonthIncome > 0 ? 100 : 0);
         $expenseChange = $lastMonthExpense > 0 ? (($thisMonthExpense - $lastMonthExpense) / $lastMonthExpense) * 100 : ($thisMonthExpense > 0 ? 100 : 0);
@@ -49,15 +72,25 @@ class TransactionController extends Controller
         // Categories come from all budgets (not only the current page)
         $categories = Budget::where('user_id', $userId)->pluck('category')->unique();
 
+        $expenseByCategory = Cache::remember(
+            'finance.expense_by_category.' . $userId,
+            now()->addMinutes(2),
+            function () use ($userId) {
+                return Transaction::query()
+                    ->where('user_id', $userId)
+                    ->where('type', 'expense')
+                    ->selectRaw('title, COALESCE(SUM(amount), 0) as total')
+                    ->groupBy('title')
+                    ->pluck('total', 'title');
+            }
+        );
+
         // Paginate budgets and compute used/remaining/percent on the current page collection
         $budgetsPerPage = 6;
         $budgetsQuery = Budget::where('user_id', $userId)->orderBy('id', 'asc');
         $budgets = $budgetsQuery->paginate($budgetsPerPage)->withQueryString();
-        $budgets->getCollection()->transform(function($budget) use ($userId) {
-            $used = Transaction::where('user_id', $userId)
-                ->where('type', 'expense')
-                ->where('title', $budget->category)
-                ->sum('amount');
+        $budgets->getCollection()->transform(function($budget) use ($expenseByCategory) {
+            $used = (float) ($expenseByCategory[$budget->category] ?? 0);
 
             $budget->used = $used;
             $budget->remaining = $budget->limit_amount - $used;
@@ -101,6 +134,8 @@ class TransactionController extends Controller
         $data['user_id'] = Auth::id();
 
         Transaction::create($data);
+        $this->clearFinanceCache(Auth::id());
+
         return back()->with('success', 'Transaction saved successfully!');
     }
 
@@ -111,12 +146,26 @@ class TransactionController extends Controller
         }
 
         $transaction->delete();
+        $this->clearFinanceCache(Auth::id());
+
         return back()->with('success', 'Transaction deleted.');
+    }
+
+    private function clearFinanceCache(int $userId): void
+    {
+        Cache::forget('finance.summary.' . $userId);
+        Cache::forget('finance.recent_transactions.' . $userId);
+        Cache::forget('finance.expense_by_category.' . $userId);
     }
 
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
+
+        if (! $user instanceof User) {
+            abort(403);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
@@ -129,6 +178,11 @@ class TransactionController extends Controller
     {
         $request->validate(['password' => 'required|min:8|confirmed']);
         $user = Auth::user();
+
+        if (! $user instanceof User) {
+            abort(403);
+        }
+
         $user->password = Hash::make($request->password);
         $user->save();
         return back()->with('success', 'Password successfully updated!');

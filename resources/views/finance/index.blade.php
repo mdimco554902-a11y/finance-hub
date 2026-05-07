@@ -21,10 +21,14 @@
 
     /* Budget & Savings Grid Layout */
     .budget-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-    .budget-card { background: white; padding: 32px; border-radius: 24px; border: 1px solid #F1F5F9; position: relative; }
-    .budget-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .budget-card { background: white; padding: 40px 32px 32px; border-radius: 24px; border: 1px solid #F1F5F9; position: relative; }
+    .budget-info { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 12px; }
     .progress-container { background: #F1F5F9; height: 12px; border-radius: 10px; margin: 20px 0; overflow: hidden; }
-    .progress-bar { height: 100%; border-radius: 10px; transition: 0.5s ease-in-out; }
+        .progress-bar { height: 100%; border-radius: 10px; transition: 0.5s ease-in-out; }
+        .budget-left > span { font-size: 22px; line-height: 1; }
+        .budget-right > span { font-size: 14px; color: #64748B; font-weight:600; }
+        .progress-container { background: #F1F5F9; height: 14px; border-radius: 9999px; margin: 14px 0; overflow: hidden; }
+        .progress-bar { height: 100%; border-radius: 9999px; transition: 0.5s ease-in-out; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.03); }
 
     /* Modern List Styling */
     .card-section { background: white; padding: 32px; border-radius: 24px; border: 1px solid #F1F5F9; margin-bottom: 40px; }
@@ -33,14 +37,14 @@
     .icon-box { width: 48px; height: 48px; background: #F1F5F9; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
     
     /* Search Bar Styling */
-    .search-container { display: flex; gap: 12px; margin-bottom: 32px; background: #F8FAFC; padding: 20px; border-radius: 20px; }
+    .search-container { display: flex; gap: 12px; align-items: center; margin-bottom: 32px; background: #F8FAFC; padding: 20px; border-radius: 20px; }
     .search-input { flex: 1; padding: 14px 20px; border-radius: 14px; border: 1px solid #E2E8F0; outline: none; font-size: 15px; }
     .btn-search { background: #1E293B; color: white; border: none; padding: 0 24px; border-radius: 14px; font-weight: bold; cursor: pointer; }
 
     /* Table Section */
     table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; color: #94A3B8; font-size: 12px; text-transform: uppercase; padding: 12px; border-bottom: 1px solid #F1F5F9; }
-    td { padding: 16px 12px; border-bottom: 1px solid #F8FAFC; }
+    th { text-align: left; color: #94A3B8; font-size: 12px; text-transform: uppercase; padding: 12px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+    td { padding: 16px 12px; border-bottom: 1px solid #F8FAFC; vertical-align: middle; }
     .amount-income { color: #10B981; font-weight: 800; }
     .amount-expense { color: #F43F5E; font-weight: 800; }
 
@@ -56,8 +60,20 @@
     .btn-contribute { background: #F1F5F9; color: #2563EB; border: none; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
     .btn-contribute:hover { background: #E2E8F0; }
 
+    /* Savings/Budget card tweaks for alignment */
+    .budget-left { display:flex; flex-direction:column; gap:10px; }
+    .budget-right { align-self:flex-start; text-align:right; }
+    .btn-contribute.small { padding:6px 12px; border-radius:12px; font-size:13px; font-weight:700; background:#F8FAFF; }
+    .progress-container { background: #F1F5F9; height: 12px; border-radius: 10px; margin: 12px 0; overflow: hidden; }
+
     /* Icon Buttons (Edit/Delete) */
     .action-icons { display: flex; gap: 8px; }
+    .action-icons { top: 20px; right: 20px; }
+    .btn-icon i { width: 16px; height: 16px; }
+
+    .budget-footer { display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:14px; font-weight:600; }
+    .budget-footer .left { color:#94A3B8; font-weight:600; }
+    .budget-footer .right { color:#2563EB; font-weight:700; }
     .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; color: #94A3B8; transition: 0.2s; }
     .btn-icon:hover { color: #1E293B; }
     .btn-icon.delete:hover { color: #F43F5E; }
@@ -71,6 +87,14 @@
     .value-text { font-size: 14px; color: #64748B; font-weight: 500; }
     .btn-action { padding: 8px 16px; border-radius: 10px; border: 1px solid #E2E8F0; background: white; font-size: 13px; font-weight: 600; color: #1E293B; cursor: pointer; transition: 0.2s; }
     .btn-action:hover { background: #F8FAFC; border-color: #CBD5E1; }
+</style>
+
+<style>
+    /* Shared pagination styles for all lists */
+    .pagination { display:flex; gap:8px; justify-content:center; margin-top:16px; }
+    .page-link { padding:8px 12px; border-radius:10px; border:1px solid #E2E8F0; background:white; color:#1E293B; text-decoration:none; font-weight:700; }
+    .page-link.disabled { opacity:0.5; pointer-events:none; }
+    .page-link.active { background:#2563EB; color:white; border-color:#2563EB; }
 </style>
 
 <div class="header">
@@ -311,6 +335,50 @@
                 @endforelse
             </tbody>
         </table>
+
+            <div class="pagination" aria-label="Pagination">
+                    @php
+                        $current = $transactions->currentPage();
+                        $last = $transactions->lastPage();
+                        $start = max(1, $current - 2);
+                        $end = min($last, $current + 2);
+                    @endphp
+
+                    {{-- Previous --}}
+                    @if($transactions->onFirstPage())
+                        <span class="page-link disabled" aria-disabled="true">‹ Prev</span>
+                    @else
+                        <a href="{{ $transactions->previousPageUrl() }}" class="page-link" aria-label="Previous">‹ Prev</a>
+                    @endif
+
+                    {{-- First page if gap --}}
+                    @if($start > 1)
+                        <a href="{{ $transactions->url(1) }}" class="page-link">1</a>
+                        @if($start > 2)
+                            <span class="page-link disabled">…</span>
+                        @endif
+                    @endif
+
+                    {{-- Page range --}}
+                    @for($i = $start; $i <= $end; $i++)
+                        <a href="{{ $transactions->url($i) }}" class="page-link {{ $i == $current ? 'active' : '' }}">{{ $i }}</a>
+                    @endfor
+
+                    {{-- Last page if gap --}}
+                    @if($end < $last)
+                        @if($end < $last - 1)
+                            <span class="page-link disabled">…</span>
+                        @endif
+                        <a href="{{ $transactions->url($last) }}" class="page-link">{{ $last }}</a>
+                    @endif
+
+                    {{-- Next --}}
+                    @if($transactions->hasMorePages())
+                        <a href="{{ $transactions->nextPageUrl() }}" class="page-link" aria-label="Next">Next ›</a>
+                    @else
+                        <span class="page-link disabled" aria-disabled="true">Next ›</span>
+                    @endif
+                </div>
     </div>
 
 @elseif(request('view') == 'budgets') 
@@ -336,9 +404,9 @@
             <div class="progress-container"> 
                 <div class="progress-bar" style="width: {{ $b->percent }}%; background: {{ $b->color }};"></div> 
             </div> 
-            <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:600;"> 
-                <span style="color:#94A3B8;">{{ round($b->percent) }}% used</span> 
-                <span style="color: {{ $b->remaining < 0 ? '#F43F5E' : '#10B981' }}"> 
+            <div class="budget-footer"> 
+                <span class="left">{{ round($b->percent) }}% used</span> 
+                <span class="right" style="color: {{ $b->remaining < 0 ? '#F43F5E' : '#10B981' }}"> 
                     ₱{{ number_format(abs($b->remaining)) }} {{ $b->remaining < 0 ? 'over' : 'remaining' }} 
                 </span> 
             </div> 
@@ -349,7 +417,42 @@
         </div> 
         @endforelse 
     </div> 
-
+    </div> 
+    <div style="margin-top:12px; display:flex; justify-content:center;">
+        @php
+            $currentB = $budgets->currentPage();
+            $lastB = $budgets->lastPage();
+            $startB = max(1, $currentB - 2);
+            $endB = min($lastB, $currentB + 2);
+        @endphp
+        <div class="pagination" aria-label="Budgets Pagination">
+            @if($budgets->onFirstPage())
+                <span class="page-link disabled" aria-disabled="true">‹ Prev</span>
+            @else
+                <a href="{{ $budgets->previousPageUrl() }}" class="page-link">‹ Prev</a>
+            @endif
+            @if($startB > 1)
+                <a href="{{ $budgets->url(1) }}" class="page-link">1</a>
+                @if($startB > 2)
+                    <span class="page-link disabled">…</span>
+                @endif
+            @endif
+            @for($i = $startB; $i <= $endB; $i++)
+                <a href="{{ $budgets->url($i) }}" class="page-link {{ $i == $currentB ? 'active' : '' }}">{{ $i }}</a>
+            @endfor
+            @if($endB < $lastB)
+                @if($endB < $lastB - 1)
+                    <span class="page-link disabled">…</span>
+                @endif
+                <a href="{{ $budgets->url($lastB) }}" class="page-link">{{ $lastB }}</a>
+            @endif
+            @if($budgets->hasMorePages())
+                <a href="{{ $budgets->nextPageUrl() }}" class="page-link">Next ›</a>
+            @else
+                <span class="page-link disabled" aria-disabled="true">Next ›</span>
+            @endif
+        </div>
+    </div>
 @elseif(request('view') == 'savings')
     <div class="budget-grid">
         @forelse($savings as $s)
@@ -367,29 +470,64 @@
             </div>
 
             <div class="budget-info">
-                <div>
+                <div class="budget-left">
                     <span style="font-size:20px; font-weight:700; color:#1E293B;">{{ $s->title }}</span>
-                    <br>
-                    <button class="btn-contribute" onclick="openContributionModal({{ $s->id }}, '{{ addslashes($s->title) }}')">
-                        + Add Money
-                    </button>
+                    <button class="btn-contribute small" onclick="openContributionModal({{ $s->id }}, '{{ addslashes($s->title) }}')">+ Add Money</button>
                 </div>
-                <span style="font-weight:600; color:#64748B;">₱{{ number_format($s->current_amount) }} / ₱{{ number_format($s->target_amount) }}</span>
+                <div class="budget-right">
+                    <span style="font-weight:600; color:#64748B;">₱{{ number_format($s->current_amount) }} / ₱{{ number_format($s->target_amount) }}</span>
+                </div>
             </div>
             <div class="progress-container">
                 <div class="progress-bar" style="width: {{ $s->percentage }}%; background: {{ $s->color }};"></div>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:600;">
-                <span style="color:#94A3B8;">{{ $s->percentage }}% completed</span>
-                <span style="color:#2563EB;">₱{{ number_format($s->target_amount - $s->current_amount) }} left to save</span>
+            <div class="budget-footer">
+                <span class="left">{{ $s->percentage }}% completed</span>
+                <span class="right">₱{{ number_format($s->target_amount - $s->current_amount) }} left to save</span>
             </div>
         </div>
-        @empty
+            @empty
         <div class="stat-card" style="grid-column: span 2; text-align:center; padding:50px;">
             <p style="color:#94A3B8;">No savings goals yet. Start saving for your future!</p>
         </div>
         @endforelse
     </div>
+
+        <div style="margin-top:12px; display:flex; justify-content:center;">
+            @php
+                $currentS = $savings->currentPage();
+                $lastS = $savings->lastPage();
+                $startS = max(1, $currentS - 2);
+                $endS = min($lastS, $currentS + 2);
+            @endphp
+            <div class="pagination" aria-label="Savings Pagination">
+                @if($savings->onFirstPage())
+                    <span class="page-link disabled" aria-disabled="true">‹ Prev</span>
+                @else
+                    <a href="{{ $savings->previousPageUrl() }}" class="page-link">‹ Prev</a>
+                @endif
+                @if($startS > 1)
+                    <a href="{{ $savings->url(1) }}" class="page-link">1</a>
+                    @if($startS > 2)
+                        <span class="page-link disabled">…</span>
+                    @endif
+                @endif
+                @for($i = $startS; $i <= $endS; $i++)
+                    <a href="{{ $savings->url($i) }}" class="page-link {{ $i == $currentS ? 'active' : '' }}">{{ $i }}</a>
+                @endfor
+                @if($endS < $lastS)
+                    @if($endS < $lastS - 1)
+                        <span class="page-link disabled">…</span>
+                    @endif
+                    <a href="{{ $savings->url($lastS) }}" class="page-link">{{ $lastS }}</a>
+                @endif
+                @if($savings->hasMorePages())
+                    <a href="{{ $savings->nextPageUrl() }}" class="page-link">Next ›</a>
+                @else
+                    <span class="page-link disabled" aria-disabled="true">Next ›</span>
+                @endif
+            </div>
+        </div>
 
 @elseif(request('view') == 'settings')
     <div class="settings-container">
@@ -441,46 +579,46 @@
     <div style="display: flex; flex-direction: column; gap: 32px;">
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
             <div class="stat-card" style="border-left: 4px solid #10B981;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div style="font-size:24px; background:#ECFDF5; padding:10px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="trending-up" style="color:#10B981"></i>
+                    </div>
+                    <div style="flex:1; text-align:right;">
                         <div class="label">Total Income</div>
                         <div class="value">₱{{ number_format($income, 2) }}</div>
                     </div>
-                    <div style="font-size: 24px; background: #ECFDF5; padding: 10px; border-radius: 12px;">
-                        <i data-lucide="trending-up" style="color: #10B981"></i>
-                    </div>
                 </div>
-                <div class="trend {{ $incomeChange >= 0 ? 'up' : 'down' }}" style="margin-top: 12px;">
+                <div class="trend {{ $incomeChange >= 0 ? 'up' : 'down' }}" style="margin-top:12px;">
                     {{ $incomeChange >= 0 ? '+' : '' }}{{ number_format($incomeChange, 1) }}% vs last month
                 </div>
             </div>
 
             <div class="stat-card" style="border-left: 4px solid #F43F5E;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div style="font-size:24px; background:#FFF1F2; padding:10px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="trending-down" style="color:#F43F5E"></i>
+                    </div>
+                    <div style="flex:1; text-align:right;">
                         <div class="label">Total Expenses</div>
                         <div class="value">₱{{ number_format($expense, 2) }}</div>
                     </div>
-                    <div style="font-size: 24px; background: #FFF1F2; padding: 10px; border-radius: 12px;">
-                        <i data-lucide="trending-down" style="color: #F43F5E"></i>
-                    </div>
                 </div>
-                <div class="trend {{ $expenseChange <= 0 ? 'up' : 'down' }}" style="margin-top: 12px;">
+                <div class="trend {{ $expenseChange <= 0 ? 'up' : 'down' }}" style="margin-top:12px;">
                     {{ $expenseChange >= 0 ? '+' : '' }}{{ number_format($expenseChange, 1) }}% vs last month
                 </div>
             </div>
 
             <div class="stat-card" style="border-left: 4px solid #2563EB; background: #F8FAFC;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div class="label" style="color: #2563EB;">Net Savings</div>
-                        <div class="value" style="color: #2563EB;">₱{{ number_format($balance, 2) }}</div>
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div style="font-size:24px; background:#EFF6FF; padding:10px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="wallet" style="color:#2563EB"></i>
                     </div>
-                    <div style="font-size: 24px; background: #EFF6FF; padding: 10px; border-radius: 12px;">
-                        <i data-lucide="wallet" style="color: #2563EB"></i>
+                    <div style="flex:1; text-align:right;">
+                        <div class="label" style="color:#2563EB;">Net Savings</div>
+                        <div class="value" style="color:#2563EB;">₱{{ number_format($balance, 2) }}</div>
                     </div>
                 </div>
-                <div class="trend up" style="color: #3B82F6; margin-top: 12px;">Real-time balance</div>
+                <div class="trend up" style="color:#3B82F6; margin-top:12px;">Real-time balance</div>
             </div>
         </div>
 
@@ -490,7 +628,7 @@
                 <a href="/?view=transactions" style="color: #2563EB; font-weight: 700; text-decoration: none; font-size: 14px;">View Statement →</a>
             </div>
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                @foreach($transactions->take(5) as $t)
+                @foreach($recentTransactions as $t)
                 <div class="transaction-item" style="background: #F8FAFC; padding: 16px; border-radius: 16px; border: 1px solid transparent; transition: 0.2s;" onmouseover="this.style.borderColor='#E2E8F0'" onmouseout="this.style.borderColor='transparent'">
                     <div style="display: flex; align-items: center; gap: 16px;">
                         <div class="icon-box" style="background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">

@@ -23,27 +23,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 2. Create the Figma-style Budgets linked to that user
-        // We add 'user_id' => $user->id to ensure you own these records!
-        
-        Budget::updateOrCreate(
-            ['category' => 'Groceries', 'user_id' => $user->id],
-            ['limit_amount' => 5000, 'color' => '#10B981']
-        );
-
-        Budget::updateOrCreate(
-            ['category' => 'Dining Out', 'user_id' => $user->id],
-            ['limit_amount' => 3000, 'color' => '#F59E0B']
-        );
-
-        Budget::updateOrCreate(
-            ['category' => 'Shopping', 'user_id' => $user->id],
-            ['limit_amount' => 2500, 'color' => '#EF4444']
-        );
-
-        Budget::updateOrCreate(
-            ['category' => 'Entertainment', 'user_id' => $user->id],
-            ['limit_amount' => 1500, 'color' => '#8B5CF6']
-        );
+        // Call dedicated seeders to populate more realistic sample data
+        $this->call([
+            UserSeeder::class,
+            BudgetSeeder::class,
+            TransactionSeeder::class,
+            SavingSeeder::class,
+        ]);
     }
 }

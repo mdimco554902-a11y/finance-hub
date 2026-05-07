@@ -23,8 +23,10 @@ class TransactionController extends Controller
             $query->where('title', 'like', '%' . $search . '%');
         }
 
-        // 2. Get Transactions
-        $transactions = $query->latest()->get();
+        // 2. Get Transactions (paginated) and recent activity
+        $perPage = 2;
+        $transactions = $query->latest()->paginate($perPage)->withQueryString();
+        $recentTransactions = Transaction::where('user_id', $userId)->latest()->take(5)->get();
 
         // 3. Calculate All-time totals
         $income = Transaction::where('user_id', $userId)->where('type', 'income')->sum('amount');
@@ -44,35 +46,42 @@ class TransactionController extends Controller
         $expenseChange = $lastMonthExpense > 0 ? (($thisMonthExpense - $lastMonthExpense) / $lastMonthExpense) * 100 : ($thisMonthExpense > 0 ? 100 : 0);
 
         // 5. Fetch Budgets & Categories for the Datalist
-        // We get unique categories to fix the "Undefined variable $categories" error
-        $allBudgets = Budget::where('user_id', $userId)->get();
-        $categories = $allBudgets->pluck('category')->unique();
+        // Categories come from all budgets (not only the current page)
+        $categories = Budget::where('user_id', $userId)->pluck('category')->unique();
 
-        $budgets = $allBudgets->map(function($budget) use ($userId) {
+        // Paginate budgets and compute used/remaining/percent on the current page collection
+        $budgetsPerPage = 6;
+        $budgetsQuery = Budget::where('user_id', $userId)->orderBy('id', 'asc');
+        $budgets = $budgetsQuery->paginate($budgetsPerPage)->withQueryString();
+        $budgets->getCollection()->transform(function($budget) use ($userId) {
             $used = Transaction::where('user_id', $userId)
                 ->where('type', 'expense')
-                ->where('title', $budget->category) 
+                ->where('title', $budget->category)
                 ->sum('amount');
-                
+
             $budget->used = $used;
             $budget->remaining = $budget->limit_amount - $used;
             $budget->percent = $budget->limit_amount > 0 ? ($used / $budget->limit_amount) * 100 : 0;
             return $budget;
         });
 
-        // 6. Fetch Savings goals
-        $savings = Saving::where('user_id', $userId)->get()->map(function($goal) {
+        // 6. Fetch Savings goals (paginated)
+        $savingsPerPage = 6;
+        $savingsQuery = Saving::where('user_id', $userId)->orderBy('id', 'asc');
+        $savings = $savingsQuery->paginate($savingsPerPage)->withQueryString();
+        $savings->getCollection()->transform(function($goal) {
             $goal->percentage = $goal->target_amount > 0 ? round(($goal->current_amount / $goal->target_amount) * 100) : 0;
             return $goal;
         });
 
         // 7. Return the view with all required variables
         return view('finance.index', compact(
-            'transactions', 
-            'income', 
-            'expense', 
-            'balance', 
-            'search', 
+            'transactions',
+            'recentTransactions',
+            'income',
+            'expense',
+            'balance',
+            'search',
             'budgets',
             'categories',
             'incomeChange',
